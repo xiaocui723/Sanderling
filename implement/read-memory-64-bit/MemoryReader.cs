@@ -15,9 +15,9 @@ public class MemoryReaderFromProcessSample(
     : IMemoryReader
 {
     readonly IImmutableList<SampleMemoryRegion> memoryRegionsOrderedByAddress =
-            memoryRegions
-            .OrderBy(memoryRegion => memoryRegion.baseAddress)
-            .ToImmutableList();
+        memoryRegions
+        .OrderBy(memoryRegion => memoryRegion.baseAddress)
+        .ToImmutableList();
 
     public ReadOnlyMemory<byte>? ReadBytes(ulong startAddress, int length)
     {
@@ -52,18 +52,13 @@ public class MemoryReaderFromProcessSample(
 }
 
 
-public class MemoryReaderFromLiveProcess : IMemoryReader, IDisposable
+public class MemoryReaderFromLiveProcess(int processId) : IMemoryReader, IDisposable
 {
-    readonly IntPtr processHandle;
-
-    public MemoryReaderFromLiveProcess(int processId)
-    {
-        processHandle =
-            WinApi.OpenProcess(
-                (int)(WinApi.ProcessAccessFlags.QueryInformation | WinApi.ProcessAccessFlags.VirtualMemoryRead),
-                false,
-                dwProcessId: processId);
-    }
+    readonly IntPtr processHandle =
+        WinApi.OpenProcess(
+            (int)(WinApi.ProcessAccessFlags.QueryInformation | WinApi.ProcessAccessFlags.VirtualMemoryRead),
+            false,
+            dwProcessId: processId);
 
     public void Dispose()
     {

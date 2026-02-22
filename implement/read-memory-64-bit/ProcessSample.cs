@@ -14,24 +14,29 @@ public class ProcessSample
         byte[] beginMainWindowClientAreaScreenshotBmp,
         byte[] endMainWindowClientAreaScreenshotBmp)
     {
-        var screenshotEntriesCandidates = new[]
-        {
-            (filePath: ImmutableList.Create("begin-main-window-client-area.bmp"), content: beginMainWindowClientAreaScreenshotBmp),
-            (filePath: ImmutableList.Create("end-main-window-client-area.bmp"), content: endMainWindowClientAreaScreenshotBmp),
-        };
+        var screenshotEntriesCandidates =
+            new[]
+            {
+                (filePath: ImmutableList.Create("begin-main-window-client-area.bmp"), content: beginMainWindowClientAreaScreenshotBmp),
+                (filePath: ImmutableList.Create("end-main-window-client-area.bmp"), content: endMainWindowClientAreaScreenshotBmp),
+            };
 
         var screenshotEntries =
             screenshotEntriesCandidates
             .Where(filePathAndContent => filePathAndContent.content is not null)
-            .Select(filePathAndContent => new KeyValuePair<IImmutableList<string>, byte[]>(
-                filePathAndContent.filePath, filePathAndContent.content))
+            .Select(
+                filePathAndContent => new KeyValuePair<IImmutableList<string>, byte[]>(
+                    filePathAndContent.filePath,
+                    filePathAndContent.content))
             .ToArray();
 
         var zipArchiveEntries =
             memoryRegions.ToImmutableDictionary(
                 region => (IImmutableList<string>)(["Process", "Memory", $"0x{region.baseAddress:X}"]),
                 region => region.content.Value.ToArray())
-            .Add(new[] { "copy-memory-log" }.ToImmutableList(), System.Text.Encoding.UTF8.GetBytes(String.Join("\n", logEntries)))
+            .Add(
+                new[] { "copy-memory-log" }.ToImmutableList(),
+                System.Text.Encoding.UTF8.GetBytes(string.Join("\n", logEntries)))
             .AddRange(screenshotEntries);
 
         return Pine.ZipArchive.ZipArchiveFromEntries(zipArchiveEntries);
@@ -57,18 +62,21 @@ public class ProcessSample
 
         var memoryRegions =
             GetFilesInDirectory(ImmutableList.Create("Process", "Memory"))
-            .Where(fileSubpathAndContent => fileSubpathAndContent.filePath.Count == 1)
-            .Select(fileSubpathAndContent =>
-            {
-                var baseAddressBase16 = System.Text.RegularExpressions.Regex.Match(fileSubpathAndContent.filePath.Single(), @"0x(.+)").Groups[1].Value;
+            .Where(fileSubpathAndContent => fileSubpathAndContent.filePath.Count is 1)
+            .Select(
+                fileSubpathAndContent =>
+                {
+                    var baseAddressBase16 =
+                        System.Text.RegularExpressions.Regex.Match(fileSubpathAndContent.filePath.Single(), @"0x(.+)").Groups[1].Value;
 
-                var baseAddress = ulong.Parse(baseAddressBase16, System.Globalization.NumberStyles.HexNumber);
+                    var baseAddress = ulong.Parse(baseAddressBase16, System.Globalization.NumberStyles.HexNumber);
 
-                return new SampleMemoryRegion(
-                    baseAddress,
-                    length: (ulong)fileSubpathAndContent.fileContent.LongLength,
-                    content: fileSubpathAndContent.fileContent);
-            }).ToImmutableList();
+                    return
+                        new SampleMemoryRegion(
+                            baseAddress,
+                            length: (ulong)fileSubpathAndContent.fileContent.LongLength,
+                            content: fileSubpathAndContent.fileContent);
+                }).ToImmutableList();
 
         return (memoryRegions, null);
     }

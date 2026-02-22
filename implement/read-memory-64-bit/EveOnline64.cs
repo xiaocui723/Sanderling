@@ -66,11 +66,12 @@ public class EveOnline64
 
         do
         {
-            int result = WinApi.VirtualQueryEx(
-                processHandle,
-                lpAddress: (IntPtr)address,
-                out WinApi.MEMORY_BASIC_INFORMATION64 m,
-                (uint)Marshal.SizeOf<WinApi.MEMORY_BASIC_INFORMATION64>());
+            int result =
+                WinApi.VirtualQueryEx(
+                    processHandle,
+                    lpAddress: (IntPtr)address,
+                    out WinApi.MEMORY_BASIC_INFORMATION64 m,
+                    (uint)Marshal.SizeOf<WinApi.MEMORY_BASIC_INFORMATION64>());
 
             var regionProtection = (WinApi.MemoryInformationProtection)m.Protect;
 
@@ -125,12 +126,14 @@ public class EveOnline64
                 regionContent = regionContentBuffer;
             }
 
-            committedRegions.Add(new SampleMemoryRegion(
-                baseAddress: regionBaseAddress,
-                length: m.RegionSize,
-                content: regionContent));
+            committedRegions.Add(
+                new SampleMemoryRegion(
+                    baseAddress: regionBaseAddress,
+                    length: m.RegionSize,
+                    content: regionContent));
 
-        } while (true);
+        }
+        while (true);
 
         logLine(
             $"Found {committedRegions.Count} committed regions with a total size of " +
@@ -326,42 +329,59 @@ public class EveOnline64
     struct PyDictEntry
     {
         public ulong hash;
+
         public ulong key;
+
         public ulong value;
     }
 
-    static readonly IImmutableSet<string> DictEntriesOfInterestKeys = ImmutableHashSet.Create(
-        "_top", "_left", "_width", "_height", "_displayX", "_displayY",
-        "_displayHeight", "_displayWidth",
-        "_name", "_text", "_setText",
-        "children",
-        "texturePath", "_bgTexturePath",
-        "_hint", "_display",
+    static readonly IImmutableSet<string> DictEntriesOfInterestKeys =
+        ImmutableHashSet.Create(
+            "_top",
+            "_left",
+            "_width",
+            "_height",
+            "_displayX",
+            "_displayY",
+            "_displayHeight",
+            "_displayWidth",
+            "_name",
+            "_text",
+            "_setText",
+            "children",
+            "texturePath",
+            "_bgTexturePath",
+            "_hint",
+            "_display",
 
-        //  HPGauges
-        "lastShield", "lastArmor", "lastStructure",
+            //  HPGauges
+            "lastShield",
+            "lastArmor",
+            "lastStructure",
 
-        //  Found in "ShipHudSpriteGauge"
-        "_lastValue",
+            //  Found in "ShipHudSpriteGauge"
+            "_lastValue",
 
-        //  Found in "ModuleButton"
-        "ramp_active",
+            //  Found in "ModuleButton"
+            "ramp_active",
 
-        //  Found in the Transforms contained in "ShipModuleButtonRamps"
-        "_rotation",
+            //  Found in the Transforms contained in "ShipModuleButtonRamps"
+            "_rotation",
 
-        //  Found under OverviewEntry in Sprite named "iconSprite"
-        "_color",
+            //  Found under OverviewEntry in Sprite named "iconSprite"
+            "_color",
 
-        //  Found in "SE_TextlineCore"
-        "_sr",
+            //  Found in "SE_TextlineCore"
+            "_sr",
 
-        //  Found in "_sr" Bunch
-        "htmlstr",
+            //  Found in "_sr" Bunch
+            "htmlstr",
 
-        // 2023-01-03 Sample with PhotonUI: process-sample-ebdfff96e7.zip
-        "_texturePath", "_opacity", "_bgColor", "isExpanded"
-    );
+            // 2023-01-03 Sample with PhotonUI: process-sample-ebdfff96e7.zip
+            "_texturePath",
+            "_opacity",
+            "_bgColor",
+            "isExpanded");
 
     struct LocalMemoryReadingTools
     {
@@ -408,8 +428,10 @@ public class EveOnline64
 
         var stringBytesCount = (int)unicode_string_length * 2;
 
-        var stringBytes = memoryReadingTools.memoryReader.ReadBytes(
-            BitConverter.ToUInt64(pythonObjectMemory.Value.Span[0x18..]), stringBytesCount);
+        var stringBytes =
+            memoryReadingTools.memoryReader.ReadBytes(
+                BitConverter.ToUInt64(pythonObjectMemory.Value.Span[0x18..]),
+                stringBytesCount);
 
         if (!(stringBytes?.Length == stringBytesCount))
             return "Failed to read string bytes.";
@@ -431,11 +453,12 @@ public class EveOnline64
         if (asInt32 == value)
             return asInt32;
 
-        return new
-        {
-            @int = value,
-            int_low32 = asInt32,
-        };
+        return
+            new
+            {
+                @int = value,
+                int_low32 = asInt32,
+            };
     }
 
     static object ReadingFromPythonType_bool(ulong address, LocalMemoryReadingTools memoryReadingTools)
@@ -480,13 +503,14 @@ public class EveOnline64
             return (int)(valueAsFloat.Value * 100);
         }
 
-        return new
-        {
-            aPercent = readValuePercentFromDictEntryKey("_a"),
-            rPercent = readValuePercentFromDictEntryKey("_r"),
-            gPercent = readValuePercentFromDictEntryKey("_g"),
-            bPercent = readValuePercentFromDictEntryKey("_b"),
-        };
+        return
+            new
+            {
+                aPercent = readValuePercentFromDictEntryKey("_a"),
+                rPercent = readValuePercentFromDictEntryKey("_r"),
+                gPercent = readValuePercentFromDictEntryKey("_g"),
+                bPercent = readValuePercentFromDictEntryKey("_b"),
+            };
     }
 
     static object ReadingFromPythonType_Bunch(ulong address, LocalMemoryReadingTools memoryReadingTools)
@@ -505,24 +529,23 @@ public class EveOnline64
                 continue;
             }
 
-            entriesOfInterest.Add(new UITreeNode.DictEntry
-            (
-                key: entry.Key,
-                value: memoryReadingTools.GetDictEntryValueRepresentation(entry.Value)
-            ));
+            entriesOfInterest.Add(
+                new UITreeNode.DictEntry(
+                    key: entry.Key,
+                    value: memoryReadingTools.GetDictEntryValueRepresentation(entry.Value)));
         }
 
         var entriesOfInterestJObject =
             new System.Text.Json.Nodes.JsonObject(
-                entriesOfInterest.Select(dictEntry =>
-                new KeyValuePair<string, System.Text.Json.Nodes.JsonNode?>
-                    (dictEntry.key,
-                    System.Text.Json.Nodes.JsonNode.Parse(SerializeMemoryReadingNodeToJson(dictEntry.value)))));
+                entriesOfInterest.Select(
+                    dictEntry =>
+                    new KeyValuePair<string, System.Text.Json.Nodes.JsonNode?>(
+                        dictEntry.key,
+                        System.Text.Json.Nodes.JsonNode.Parse(SerializeMemoryReadingNodeToJson(dictEntry.value)))));
 
-        return new UITreeNode.Bunch
-        (
-            entriesOfInterest: entriesOfInterestJObject
-        );
+        return
+            new UITreeNode.Bunch(
+                entriesOfInterest: entriesOfInterestJObject);
     }
 
     static object ReadingFromPythonType_Link(ulong address, LocalMemoryReadingTools memoryReadingTools)
@@ -543,12 +566,14 @@ public class EveOnline64
         var firstDictReference =
             linkMemoryAsLongMemory
             .ToArray()
-            .Where(reference =>
-            {
-                var referencedObjectTypeName = memoryReadingTools.GetPythonTypeNameFromPythonObjectAddress(reference);
+            .Where(
+                reference =>
+                {
+                    var referencedObjectTypeName =
+                        memoryReadingTools.GetPythonTypeNameFromPythonObjectAddress(reference);
 
-                return referencedObjectTypeName is "dict";
-            })
+                    return referencedObjectTypeName is "dict";
+                })
             .FirstOrDefault();
 
         if (firstDictReference is 0)
@@ -560,12 +585,13 @@ public class EveOnline64
                 keySelector: dictEntry => dictEntry.Key,
                 elementSelector: dictEntry => memoryReadingTools.GetDictEntryValueRepresentation(dictEntry.Value));
 
-        return new UITreeNode(
-            pythonObjectAddress: address,
-            pythonObjectTypeName: pythonObjectTypeName,
-            dictEntriesOfInterest: dictEntries,
-            otherDictEntriesKeys: null,
-            children: null);
+        return
+            new UITreeNode(
+                pythonObjectAddress: address,
+                pythonObjectTypeName: pythonObjectTypeName,
+                dictEntriesOfInterest: dictEntries,
+                otherDictEntriesKeys: null,
+                children: null);
     }
 
 
@@ -650,22 +676,26 @@ public class EveOnline64
 
         string getPythonTypeNameFromPythonObjectAddress(ulong objectAddress)
         {
-            return cache.GetPythonTypeNameFromPythonObjectAddress(objectAddress, objectAddress =>
-            {
-                var objectMemory = memoryReader.ReadBytes(objectAddress, 0x10);
+            return
+                cache.GetPythonTypeNameFromPythonObjectAddress(
+                    objectAddress,
+                    objectAddress =>
+                    {
+                        var objectMemory = memoryReader.ReadBytes(objectAddress, 0x10);
 
-                if (!(objectMemory?.Length == 0x10))
-                    return null;
+                        if (!(objectMemory?.Length == 0x10))
+                            return null;
 
-                return getPythonTypeNameFromPythonTypeObjectAddress(BitConverter.ToUInt64(objectMemory.Value.Span[8..]));
-            });
+                        return getPythonTypeNameFromPythonTypeObjectAddress(BitConverter.ToUInt64(objectMemory.Value.Span[8..]));
+                    });
         }
 
         string readPythonStringValueMaxLength4000(ulong strObjectAddress)
         {
-            return cache.GetPythonStringValueMaxLength4000(
-                strObjectAddress,
-                strObjectAddress => ReadPythonStringValue(strObjectAddress, memoryReader, 4000));
+            return
+                cache.GetPythonStringValueMaxLength4000(
+                    strObjectAddress,
+                    strObjectAddress => ReadPythonStringValue(strObjectAddress, memoryReader, 4000));
         }
 
         PyDictEntry[] ReadActiveDictionaryEntriesFromDictionaryAddress(ulong dictionaryAddress)
@@ -749,12 +779,13 @@ public class EveOnline64
                     func: (dict, entry) => dict.SetItem(entry.key, entry.value));
         }
 
-        var localMemoryReadingTools = new LocalMemoryReadingTools
-        {
-            memoryReader = memoryReader,
-            getDictionaryEntriesWithStringKeys = GetDictionaryEntriesWithStringKeys,
-            GetPythonTypeNameFromPythonObjectAddress = getPythonTypeNameFromPythonObjectAddress,
-        };
+        var localMemoryReadingTools =
+            new LocalMemoryReadingTools
+            {
+                memoryReader = memoryReader,
+                getDictionaryEntriesWithStringKeys = GetDictionaryEntriesWithStringKeys,
+                GetPythonTypeNameFromPythonObjectAddress = getPythonTypeNameFromPythonObjectAddress,
+            };
 
         var pythonObjectTypeName = getPythonTypeNameFromPythonObjectAddress(nodeAddress);
 
@@ -774,26 +805,30 @@ public class EveOnline64
 
         object GetDictEntryValueRepresentation(ulong valueOjectAddress)
         {
-            return cache.GetDictEntryValueRepresentation(valueOjectAddress, valueOjectAddress =>
-            {
-                var value_pythonTypeName = getPythonTypeNameFromPythonObjectAddress(valueOjectAddress);
+            return
+                cache.GetDictEntryValueRepresentation(
+                    valueOjectAddress,
+                    valueOjectAddress =>
+                    {
+                        var value_pythonTypeName = getPythonTypeNameFromPythonObjectAddress(valueOjectAddress);
 
-                var genericRepresentation = new UITreeNode.DictEntryValueGenericRepresentation
-                (
-                    address: valueOjectAddress,
-                    pythonObjectTypeName: value_pythonTypeName
-                );
+                        var genericRepresentation =
+                            new UITreeNode.DictEntryValueGenericRepresentation(
+                                address: valueOjectAddress,
+                                pythonObjectTypeName: value_pythonTypeName);
 
-                if (value_pythonTypeName is null)
-                    return genericRepresentation;
+                        if (value_pythonTypeName is null)
+                            return genericRepresentation;
 
-                specializedReadingFromPythonType.TryGetValue(value_pythonTypeName, out var specializedRepresentation);
+                        specializedReadingFromPythonType.TryGetValue(
+                            value_pythonTypeName,
+                            out var specializedRepresentation);
 
-                if (specializedRepresentation is null)
-                    return genericRepresentation;
+                        if (specializedRepresentation is null)
+                            return genericRepresentation;
 
-                return specializedRepresentation(genericRepresentation.address, localMemoryReadingTools);
-            });
+                        return specializedRepresentation(genericRepresentation.address, localMemoryReadingTools);
+                    });
         }
 
         localMemoryReadingTools.GetDictEntryValueRepresentation = GetDictEntryValueRepresentation;
@@ -815,19 +850,20 @@ public class EveOnline64
                 continue;
             }
 
-            dictEntriesOfInterest.Add(new UITreeNode.DictEntry
-            (
-                key: keyString,
-                value: GetDictEntryValueRepresentation(dictionaryEntry.value)
-            ));
+            dictEntriesOfInterest.Add(
+                new UITreeNode.DictEntry(
+                    key: keyString,
+                    value: GetDictEntryValueRepresentation(dictionaryEntry.value)));
         }
 
         {
             var _displayDictEntry = dictEntriesOfInterest.FirstOrDefault(entry => entry.key == "_display");
 
             if (_displayDictEntry is not null && (_displayDictEntry.value is bool displayAsBool))
+            {
                 if (!displayAsBool)
                     return null;
+            }
         }
 
         UITreeNode[] ReadChildren()
@@ -864,15 +900,16 @@ public class EveOnline64
 
             var childrenEntry =
                 pyChildrenDictEntries
-                .FirstOrDefault(dictionaryEntry =>
-                {
-                    if (getPythonTypeNameFromPythonObjectAddress(dictionaryEntry.key) is not "str")
-                        return false;
+                .FirstOrDefault(
+                    dictionaryEntry =>
+                    {
+                        if (getPythonTypeNameFromPythonObjectAddress(dictionaryEntry.key) is not "str")
+                            return false;
 
-                    var keyString = readPythonStringValueMaxLength4000(dictionaryEntry.key);
+                        var keyString = readPythonStringValueMaxLength4000(dictionaryEntry.key);
 
-                    return keyString == "_childrenObjects";
-                });
+                        return keyString == "_childrenObjects";
+                    });
 
             //  Console.WriteLine($"Found {(childrenEntry.value == 0 ? "no" : "a")} dictionary entry for children of 0x{nodeAddress:X}");
 
@@ -895,15 +932,16 @@ public class EveOnline64
 
                 childrenEntry =
                     pyChildrenDictEntries
-                    .FirstOrDefault(dictionaryEntry =>
-                    {
-                        if (getPythonTypeNameFromPythonObjectAddress(dictionaryEntry.key) is not "str")
-                            return false;
+                    .FirstOrDefault(
+                        dictionaryEntry =>
+                        {
+                            if (getPythonTypeNameFromPythonObjectAddress(dictionaryEntry.key) is not "str")
+                                return false;
 
-                        var keyString = readPythonStringValueMaxLength4000(dictionaryEntry.key);
+                            var keyString = readPythonStringValueMaxLength4000(dictionaryEntry.key);
 
-                        return keyString is "_childrenObjects";
-                    });
+                            return keyString is "_childrenObjects";
+                        });
             }
 
             var pythonListObjectMemory = memoryReader.ReadBytes(childrenEntry.value, 0x20);
@@ -959,14 +997,13 @@ public class EveOnline64
             dictEntriesOfInterestDict[entry.key] = entry.value;
         }
 
-        return new UITreeNode
-        (
-            pythonObjectAddress: nodeAddress,
-            pythonObjectTypeName: pythonObjectTypeName,
-            dictEntriesOfInterest: dictEntriesOfInterestDict,
-            otherDictEntriesKeys: [.. otherDictEntriesKeys],
-            children: ReadChildren()?.Where(child => child is not null)?.ToArray()
-        );
+        return
+            new UITreeNode(
+                pythonObjectAddress: nodeAddress,
+                pythonObjectTypeName: pythonObjectTypeName,
+                dictEntriesOfInterest: dictEntriesOfInterestDict,
+                otherDictEntriesKeys: [.. otherDictEntriesKeys],
+                children: ReadChildren()?.Where(child => child is not null)?.ToArray());
     }
 
     static string ReadPythonStringValue(ulong stringObjectAddress, IMemoryReader memoryReader, int maxLength)
@@ -1011,9 +1048,9 @@ public class EveOnline64
         {
             Converters =
             {
-            //  Support common JSON parsers: Wrap large integers in a string to work around limitations there. (https://discourse.elm-lang.org/t/how-to-parse-a-json-object/4977)
-            new JavaScript.Int64JsonConverter(),
-            new JavaScript.UInt64JsonConverter()
+                //  Support common JSON parsers: Wrap large integers in a string to work around limitations there. (https://discourse.elm-lang.org/t/how-to-parse-a-json-object/4977)
+                new JavaScript.Int64JsonConverter(),
+                new JavaScript.UInt64JsonConverter()
             }
         };
 }

@@ -35,8 +35,11 @@ static public class WinApi
     public struct Rect
     {
         public int left;
+
         public int top;
+
         public int right;
+
         public int bottom;
     }
 
@@ -54,13 +57,21 @@ static public class WinApi
     public struct MEMORY_BASIC_INFORMATION64
     {
         public ulong BaseAddress;
+
         public ulong AllocationBase;
+
         public int AllocationProtect;
+
         public int __alignment1;
+
         public ulong RegionSize;
+
         public int State;
+
         public int Protect;
+
         public int Type;
+
         public int __alignment2;
     }
 
